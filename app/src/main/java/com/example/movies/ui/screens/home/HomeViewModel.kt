@@ -40,9 +40,7 @@ class HomeViewModel @Inject constructor(
             if (result.isSuccessful) {
                 movies.addAll(result.body()?.results?.filterNotNull().orEmpty())
             } else {
-                error = result.message()
-                val m = result.errorBody()?.string()
-                Log.d(logTag, "fetchMovies: $m")
+                error = result.errorBody()?.string()
             }
         }
     }
