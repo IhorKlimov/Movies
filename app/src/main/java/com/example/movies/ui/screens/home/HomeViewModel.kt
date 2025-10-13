@@ -1,6 +1,5 @@
 package com.example.movies.ui.screens.home
 
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -22,23 +21,31 @@ class HomeViewModel @Inject constructor(
     val movies = mutableStateListOf<Movie>()
     var isLoading by mutableStateOf(false)
         private set
-
     var error by mutableStateOf<String?>(null)
+
+    private var currentPage = 1
+    var isFetchEnabled by mutableStateOf(true)
+        private set
 
     init {
         fetchMovies()
     }
 
-    private fun fetchMovies() {
-        if (isLoading) return
+    fun fetchMovies() {
+        if (isLoading || !isFetchEnabled) return
         isLoading = true
 
         viewModelScope.launch {
-            val result = moviesRepository.discover(1)
+            val result = moviesRepository.discover(currentPage)
             isLoading = false
 
             if (result.isSuccessful) {
                 movies.addAll(result.body()?.results?.filterNotNull().orEmpty())
+                if (currentPage == result.body()?.totalPages) {
+                    isFetchEnabled = false
+                } else {
+                    currentPage++
+                }
             } else {
                 error = result.errorBody()?.string()
             }

@@ -1,26 +1,31 @@
 package com.example.movies.ui.screens.home
 
-import android.os.Build
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextFieldDefaults.contentPadding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
@@ -42,12 +47,16 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
             )
         }
     ) { padding ->
-        if (viewModel.isLoading) {
+        if (viewModel.isLoading && viewModel.movies.isEmpty()) {
             LoadingState(modifier = Modifier.padding(padding))
         } else if (viewModel.error != null) {
             ErrorState(viewModel.error.orEmpty(), Modifier.padding(padding))
         } else if (viewModel.movies.isNotEmpty()) {
-            SuccessState(viewModel.movies, Modifier.padding(padding))
+            SuccessState(
+                viewModel.movies, viewModel.isLoading,
+                viewModel::fetchMovies,
+                Modifier.padding(padding)
+            )
         }
     }
 }
@@ -72,11 +81,20 @@ fun ErrorState(
 }
 
 @Composable
-fun SuccessState(movies: List<Movie>, modifier: Modifier = Modifier) {
+fun SuccessState(
+    movies: List<Movie>,
+    isLoading: Boolean,
+    onLastItemVisible: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+    val state = rememberLazyGridState()
+
     LazyVerticalGrid(
+        state = state,
         modifier = modifier.padding(horizontal = 4.dp),
         columns = GridCells.Adaptive(180.dp),
-        contentPadding = PaddingValues(vertical = 8.dp) ,
+        contentPadding = PaddingValues(vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
@@ -86,6 +104,36 @@ fun SuccessState(movies: List<Movie>, modifier: Modifier = Modifier) {
         ) {
             MovieOverview(movies[it])
         }
+        item(
+            span = {
+                GridItemSpan(maxLineSpan)
+            }
+        ) {
+            if (isLoading) {
+                Box {
+                    CircularProgressIndicator(
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
+            }
+        }
+    }
+
+    val isLastItemVisible by remember {
+        derivedStateOf {
+            val layoutInfo = state.layoutInfo
+            val visibleItemsInfo = layoutInfo.visibleItemsInfo
+            if (visibleItemsInfo.isEmpty()) {
+                false
+            } else {
+                visibleItemsInfo.last().index == movies.size - 1
+            }
+        }
+    }
+
+    if (isLastItemVisible) {
+        Toast.makeText(context, "Last item is visible", Toast.LENGTH_SHORT).show()
+        onLastItemVisible()
     }
 }
 
@@ -96,7 +144,7 @@ fun MovieOverview(
 ) {
     AsyncImage(
         model = "https://image.tmdb.org/t/p/w500/${movie.posterPath}",
-        modifier = modifier,
+        modifier = modifier.aspectRatio(0.665f),
         contentDescription = null,
         contentScale = ContentScale.Crop
     )
