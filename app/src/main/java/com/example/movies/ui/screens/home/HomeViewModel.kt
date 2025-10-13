@@ -40,7 +40,11 @@ class HomeViewModel @Inject constructor(
             isLoading = false
 
             if (result.isSuccessful) {
-                movies.addAll(result.body()?.results?.filterNotNull().orEmpty())
+                val newPage = result.body()?.results
+                    ?.filterNotNull()
+                    .orEmpty()
+                    .filter { m -> movies.firstOrNull { it.id == m.id } == null }
+                movies.addAll(newPage)
                 if (currentPage == result.body()?.totalPages) {
                     isFetchEnabled = false
                 } else {
