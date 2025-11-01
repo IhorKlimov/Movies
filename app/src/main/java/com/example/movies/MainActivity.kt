@@ -8,6 +8,8 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import com.example.movies.navigation.Home
+import com.example.movies.navigation.MovieDetails
+import com.example.movies.ui.screens.details.MovieDetailsScreen
 import com.example.movies.ui.screens.home.HomeScreen
 import com.example.movies.ui.theme.MoviesTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -26,7 +28,14 @@ class MainActivity : ComponentActivity() {
                     onBack = { backStack.removeLastOrNull() },
                     entryProvider = entryProvider {
                         entry<Home> {
-                            HomeScreen()
+                            HomeScreen({
+                                backStack.add(MovieDetails(it))
+                            })
+                        }
+                        entry<MovieDetails> {
+                            MovieDetailsScreen(it.movie) {
+                                backStack.removeLastOrNull()
+                            }
                         }
                     }
                 )

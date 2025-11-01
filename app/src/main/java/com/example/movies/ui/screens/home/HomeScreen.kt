@@ -1,6 +1,9 @@
 package com.example.movies.ui.screens.home
 
+import android.R.attr.contentDescription
+import android.util.Log
 import android.widget.Toast
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -9,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyGridScope
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material3.CircularProgressIndicator
@@ -27,13 +31,26 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
+import androidx.lifecycle.compose.LifecycleStartEffect
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import com.example.movies.data.model.Movie
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flow
+
+
+private const val logTag = "HomeScreen"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
+fun HomeScreen(
+    onMovieSelected: (Movie) -> Unit,
+    viewModel: HomeViewModel = viewModel()
+) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -48,13 +65,14 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
         }
     ) { padding ->
         if (viewModel.isLoading && viewModel.movies.isEmpty()) {
-            LoadingState(modifier = Modifier.padding(padding))
+            InitialLoadingState(modifier = Modifier.padding(padding))
         } else if (viewModel.error != null) {
             ErrorState(viewModel.error.orEmpty(), Modifier.padding(padding))
         } else if (viewModel.movies.isNotEmpty()) {
             SuccessState(
                 viewModel.movies, viewModel.isLoading,
                 viewModel::fetchMovies,
+                onMovieSelected,
                 Modifier.padding(padding)
             )
         }
@@ -62,7 +80,7 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
 }
 
 @Composable
-fun LoadingState(modifier: Modifier = Modifier) {
+fun InitialLoadingState(modifier: Modifier = Modifier) {
     Box(
         modifier = modifier.fillMaxSize()
     ) {
@@ -85,6 +103,7 @@ fun SuccessState(
     movies: List<Movie>,
     isLoading: Boolean,
     onLastItemVisible: () -> Unit,
+    onMovieSelected: (Movie) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -102,20 +121,13 @@ fun SuccessState(
             count = movies.size,
             key = { movies[it].id ?: -1 }
         ) {
-            MovieOverview(movies[it])
+            val movie = movies[it]
+            MovieOverview(movie, {
+                onMovieSelected(movie)
+            })
         }
-        item(
-            span = {
-                GridItemSpan(maxLineSpan)
-            }
-        ) {
-            if (isLoading) {
-                Box {
-                    CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                }
-            }
+        if (isLoading) {
+            listProgressIndicator()
         }
     }
 
@@ -137,14 +149,31 @@ fun SuccessState(
     }
 }
 
+private fun LazyGridScope.listProgressIndicator() {
+    item(
+        span = {
+            GridItemSpan(maxLineSpan)
+        }
+    ) {
+        Box {
+            CircularProgressIndicator(
+                modifier = Modifier.align(Alignment.Center)
+            )
+        }
+    }
+}
+
 @Composable
 fun MovieOverview(
     movie: Movie,
+    onClicked: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     AsyncImage(
-        model = "https://image.tmdb.org/t/p/w500/${movie.posterPath}",
-        modifier = modifier.aspectRatio(0.665f),
+        model = movie.fullPosterPath,
+        modifier = modifier
+            .aspectRatio(0.665f)
+            .clickable(onClick = onClicked),
         contentDescription = null,
         contentScale = ContentScale.Crop
     )
