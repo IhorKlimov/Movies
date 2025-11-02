@@ -23,7 +23,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.example.movies.R
-import com.example.movies.data.model.Movie
+import com.example.movies.data.db.model.Movie
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

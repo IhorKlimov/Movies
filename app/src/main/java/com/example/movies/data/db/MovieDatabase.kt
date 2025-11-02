@@ -1,39 +1,24 @@
 package com.example.movies.data.db
 
-import androidx.room.AutoMigration
-import androidx.room.Dao
 import androidx.room.Database
-import androidx.room.Delete
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
-import androidx.room.Query
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
-import com.example.movies.data.model.Movie
-import java.lang.ProcessBuilder.Redirect.to
+import com.example.movies.data.db.dao.GenreDao
+import com.example.movies.data.db.dao.MovieDao
+import com.example.movies.data.db.dao.MovieWithGenreDao
+import com.example.movies.data.db.model.Genre
+import com.example.movies.data.db.model.Movie
+import com.example.movies.data.db.model.MovieWithGenreRef
 
-
-@Dao
-interface MovieDao {
-    @Query("SELECT * from movie")
-    suspend fun getAll(): List<Movie>
-
-    @Query("SELECT * FROM movie where id in (:ids)")
-    suspend fun selectByIds(ids: IntArray): List<Movie>
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertAll(movies: List<Movie>)
-
-    @Delete
-    suspend fun delete(movie: Movie)
-}
 
 @Database(
-    entities = [Movie::class],
+    entities = [Movie::class, Genre::class, MovieWithGenreRef::class],
     version = 1,
 )
 @TypeConverters(Converters::class)
 abstract class MovieDatabase : RoomDatabase() {
     abstract fun movieDao(): MovieDao
+    abstract fun genreDao(): GenreDao
+    abstract fun movieWithGenreDao(): MovieWithGenreDao
 }
 

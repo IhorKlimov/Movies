@@ -1,7 +1,5 @@
 package com.example.movies.ui.screens.home
 
-import android.R.attr.contentDescription
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -22,6 +20,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults.Indicator
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -29,18 +30,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.LifecycleEventEffect
-import androidx.lifecycle.compose.LifecycleStartEffect
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
-import com.example.movies.data.model.Movie
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.flow
+import com.example.movies.data.db.model.Movie
+import com.example.movies.data.db.model.MovieWithGenre
 
 
 private const val logTag = "HomeScreen"
@@ -70,8 +66,11 @@ fun HomeScreen(
             ErrorState(viewModel.error.orEmpty(), Modifier.padding(padding))
         } else if (viewModel.movies.isNotEmpty()) {
             SuccessState(
-                viewModel.movies, viewModel.isLoading,
+                viewModel.movies,
+                viewModel.isLoading,
+                viewModel.isRefreshing,
                 viewModel::fetchMovies,
+                viewModel::refresh,
                 onMovieSelected,
                 Modifier.padding(padding)
             )
@@ -100,34 +99,42 @@ fun ErrorState(
 
 @Composable
 fun SuccessState(
-    movies: List<Movie>,
+    movies: List<MovieWithGenre>,
     isLoading: Boolean,
+    isRefreshing: Boolean,
     onLastItemVisible: () -> Unit,
+    onRefresh: () -> Unit,
     onMovieSelected: (Movie) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val state = rememberLazyGridState()
 
-    LazyVerticalGrid(
-        state = state,
-        modifier = modifier.padding(horizontal = 4.dp),
-        columns = GridCells.Adaptive(180.dp),
-        contentPadding = PaddingValues(vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = onRefresh,
+        modifier = modifier,
     ) {
-        items(
-            count = movies.size,
-            key = { movies[it].id ?: -1 }
+        LazyVerticalGrid(
+            state = state,
+            modifier = Modifier.padding(horizontal = 4.dp),
+            columns = GridCells.Adaptive(180.dp),
+            contentPadding = PaddingValues(vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            val movie = movies[it]
-            MovieOverview(movie, {
-                onMovieSelected(movie)
-            })
-        }
-        if (isLoading) {
-            listProgressIndicator()
+            items(
+                count = movies.size,
+                key = { movies[it].movie.movieId ?: -1 }
+            ) {
+                val movie = movies[it]
+                MovieOverview(movie, {
+                    onMovieSelected(movie.movie)
+                })
+            }
+            if (isLoading) {
+                listProgressIndicator()
+            }
         }
     }
 
@@ -165,12 +172,12 @@ private fun LazyGridScope.listProgressIndicator() {
 
 @Composable
 fun MovieOverview(
-    movie: Movie,
+    movie: MovieWithGenre,
     onClicked: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     AsyncImage(
-        model = movie.fullPosterPath,
+        model = movie.movie.fullPosterPath,
         modifier = modifier
             .aspectRatio(0.665f)
             .clickable(onClick = onClicked),

@@ -9,14 +9,18 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.movies.data.db.MovieDatabase
-import com.example.movies.data.model.Movie
+import com.example.movies.data.db.model.Genre
+import com.example.movies.data.db.model.Movie
+import com.example.movies.data.api.model.Movie as APIMovie
+import com.example.movies.data.db.model.MovieWithGenre
+import com.example.movies.data.db.model.MovieWithGenreRef
 import com.example.movies.data.repository.MoviesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.async
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlin.collections.flatMap
+import kotlin.collections.map
 
 private const val logTag = "HomeViewModel"
 
@@ -25,9 +29,10 @@ open class HomeViewModel @Inject constructor(
     private val database: MovieDatabase,
     private val moviesRepository: MoviesRepository
 ) : ViewModel() {
-    open val movies = mutableStateListOf<Movie>()
+    open val movies = mutableStateListOf<MovieWithGenre>()
     open var isLoading by mutableStateOf(false)
         private set
+    var isRefreshing by mutableStateOf(false)
     open var error by mutableStateOf<String?>(null)
 
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
@@ -44,32 +49,72 @@ open class HomeViewModel @Inject constructor(
         isLoading = true
 
         viewModelScope.launch {
-          try {
-              val result = moviesRepository.discover(currentPage)
-              isLoading = false
+            try {
+                val result = moviesRepository.discover(currentPage)
 
-              if (result.isSuccessful) {
-                  val newPage = result.body()?.results
-                      ?.filterNotNull()
-                      .orEmpty()
-                      .filter { m -> movies.firstOrNull { it.id == m.id } == null }
-                  database.movieDao().insertAll(newPage)
-                  movies.addAll(newPage)
-                  if (currentPage == result.body()?.totalPages) {
-                      isFetchEnabled = false
-                  } else {
-                      currentPage++
-                  }
-              } else {
-                  error = result.errorBody()?.string()
-              }
-          } catch (e: Exception) {
-              Log.e(logTag, "fetchMovies: $e")
-              isLoading = false
-              movies.addAll(database.movieDao().getAll())
-              isFetchEnabled = false
-          }
+                if (result.isSuccessful) {
+                    if (isRefreshing) {
+                        movies.clear()
+                    }
+
+                    val newPage = result.body()?.results
+                        ?.filterNotNull()
+                        .orEmpty()
+                        .filter { m -> movies.firstOrNull { it.movie.movieId == m.id } == null }
+
+                    saveToDatabase(newPage)
+
+                    movies.addAll(
+                        database.movieDao()
+                            .selectMoviesWithGenresByIds(newPage.mapNotNull { it.id })
+                    )
+
+                    if (currentPage == result.body()?.totalPages) {
+                        isFetchEnabled = false
+                    } else {
+                        currentPage++
+                    }
+                } else {
+                    error = result.errorBody()?.string()
+                }
+            } catch (e: Exception) {
+                Log.e(logTag, "fetchMovies: $e")
+                if (isRefreshing) {
+                    movies.clear()
+                }
+                movies.addAll(database.movieDao().getAllMoviesWithGenres())
+                isFetchEnabled = false
+            }
+
+            isLoading = false
+            isRefreshing = false
         }
+    }
+
+    fun refresh() {
+        isFetchEnabled = true
+        currentPage = 1
+        isRefreshing = true
+
+        fetchMovies()
+    }
+
+    private suspend fun saveToDatabase(newPage: List<APIMovie>) {
+        database.movieDao().insertAll(newPage.map { Movie.fromAPIModel(it) })
+        database.genreDao().insertAll(
+            newPage.flatMap { movie -> movie.genreIds ?: listOf() }.map { Genre(it) }
+        )
+        database.movieWithGenreDao().insertAll(
+            newPage.flatMap { movie ->
+                movie.genreIds?.map { genre ->
+                    MovieWithGenreRef(
+                        movie.id ?: -1,
+                        genre
+                    )
+                } ?: listOf()
+            }
+        )
+
     }
 
 }
