@@ -158,7 +158,6 @@ fun SuccessState(
     }
 
     if (isLastItemVisible) {
-        Toast.makeText(context, "Last item is visible", Toast.LENGTH_SHORT).show()
         onLastItemVisible()
     }
 }
