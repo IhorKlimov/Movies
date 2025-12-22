@@ -1,9 +1,5 @@
 package com.example.movies.ui.screens.home
 
-import android.widget.Toast
-import androidx.compose.animation.AnimatedVisibilityScope
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -24,8 +20,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults.Indicator
-import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -33,7 +27,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -46,41 +39,42 @@ import com.example.movies.data.db.model.MovieWithGenre
 import com.example.movies.ui.LocalSharedElementScope
 
 
-private const val logTag = "HomeScreen"
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     onMovieSelected: (Movie) -> Unit,
     viewModel: HomeViewModel = viewModel()
 ) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text("Movies")
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+    with(LocalSharedElementScope.current) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Text("Movies")
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    ),
+                    modifier = Modifier.renderInSharedTransitionScopeOverlay(1f)
                 )
-            )
-        }
-    ) { padding ->
-        if (viewModel.isLoading && viewModel.movies.isEmpty()) {
-            InitialLoadingState(modifier = Modifier.padding(padding))
-        } else if (viewModel.error != null) {
-            ErrorState(viewModel.error.orEmpty(), Modifier.padding(padding))
-        } else if (viewModel.movies.isNotEmpty()) {
-            SuccessState(
-                viewModel.movies,
-                viewModel.isLoading,
-                viewModel.isRefreshing,
-                viewModel::fetchMovies,
-                viewModel::refresh,
-                onMovieSelected,
-                Modifier.padding(padding)
-            )
+            }
+        ) { padding ->
+            if (viewModel.isLoading && viewModel.movies.isEmpty()) {
+                InitialLoadingState(modifier = Modifier.padding(padding))
+            } else if (viewModel.error != null) {
+                ErrorState(viewModel.error.orEmpty(), Modifier.padding(padding))
+            } else if (viewModel.movies.isNotEmpty()) {
+                SuccessState(
+                    viewModel.movies,
+                    viewModel.isLoading,
+                    viewModel.isRefreshing,
+                    viewModel::fetchMovies,
+                    viewModel::refresh,
+                    onMovieSelected,
+                    Modifier.padding(padding)
+                )
+            }
         }
     }
 }
@@ -114,7 +108,6 @@ fun SuccessState(
     onMovieSelected: (Movie) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val context = LocalContext.current
     val state = rememberLazyGridState()
 
     PullToRefreshBox(
