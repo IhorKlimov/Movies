@@ -1,6 +1,7 @@
 package com.example.movies.ui.screens.home
 
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.clickable
@@ -36,9 +37,13 @@ import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation3.ui.LocalNavAnimatedContentScope
 import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
+import coil3.request.crossfade
 import com.example.movies.data.db.model.Movie
 import com.example.movies.data.db.model.MovieWithGenre
+import com.example.movies.ui.LocalSharedElementScope
 
 
 private const val logTag = "HomeScreen"
@@ -178,12 +183,26 @@ fun MovieOverview(
     onClicked: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    AsyncImage(
-        model = movie.movie.fullPosterPath,
-        modifier = modifier
-            .aspectRatio(0.665f)
-            .clickable(onClick = onClicked),
-        contentDescription = null,
-        contentScale = ContentScale.Crop
-    )
+    val sharedElementScope = LocalSharedElementScope.current
+    val animatedVisibilityScope = LocalNavAnimatedContentScope.current
+
+    with(sharedElementScope) {
+        AsyncImage(
+            model = ImageRequest.Builder(LocalContext.current)
+                .data(movie.movie.fullPosterPath)
+                .crossfade(true)
+                .placeholderMemoryCacheKey("movieImage${movie.movie.movieId ?: 0}")
+                .memoryCacheKey("movieImage${movie.movie.movieId ?: 0}")
+                .build(),
+            modifier = modifier
+                .sharedElement(
+                    rememberSharedContentState("movieImage${movie.movie.movieId ?: 0}"),
+                    animatedVisibilityScope
+                )
+                .aspectRatio(0.665f)
+                .clickable(onClick = onClicked),
+            contentDescription = null,
+            contentScale = ContentScale.Crop
+        )
+    }
 }
