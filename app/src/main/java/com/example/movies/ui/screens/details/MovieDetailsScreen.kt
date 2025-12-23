@@ -1,10 +1,10 @@
 package com.example.movies.ui.screens.details
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -59,17 +59,36 @@ fun MovieDetailsScreen(movie: Movie, onBackPressed: () -> Unit) {
     ) { padding ->
         val scroll = rememberScrollState()
         Column(
-            verticalArrangement = Arrangement.spacedBy(16.dp),
             modifier = Modifier
                 .padding(padding)
-                .padding(16.dp)
                 .verticalScroll(scroll),
         ) {
-            Header(movie)
-            HorizontalDivider()
-            Description(movie)
+            Backdrop(movie)
+
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Header(movie)
+                HorizontalDivider()
+                Description(movie)
+            }
         }
     }
+}
+
+@Composable
+private fun Backdrop(
+    movie: Movie,
+    modifier: Modifier = Modifier
+) {
+    AsyncImage(
+        model = movie.fullBackdropPath,
+        contentDescription = null,
+        modifier = modifier
+            .fillMaxWidth()
+            .aspectRatio(1.77f)
+    )
 }
 
 @Composable
