@@ -5,8 +5,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -19,6 +21,9 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.dropShadow
+import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -106,12 +111,14 @@ private fun Header(movie: Movie, modifier: Modifier = Modifier) {
                     .memoryCacheKey("movieImage${movie.movieId ?: 0}")
                     .build(),
                 modifier = Modifier
+                    .weight(1f)
+                    .dropShadow(RoundedCornerShape(4.dp), Shadow(4.dp))
+                    .clip(RoundedCornerShape(4.dp))
+                    .aspectRatio(0.665f)
                     .sharedElement(
                         rememberSharedContentState("movieImage${movie.movieId ?: 0}"),
                         animatedVisibilityScope
-                    )
-                    .aspectRatio(0.665f)
-                    .weight(1f),
+                    ),
                 contentScale = ContentScale.Crop,
                 contentDescription = null
             )
