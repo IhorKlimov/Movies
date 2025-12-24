@@ -107,7 +107,10 @@ private fun Header(movie: Movie, modifier: Modifier = Modifier) {
     val animatedVisibilityScope = LocalNavAnimatedContentScope.current
     val backdropHeight = current.screenWidthDp / 1.77f
 
-    Row(modifier = modifier, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+    Row(
+        modifier = modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
         with(sharedElementScope) {
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
@@ -117,7 +120,7 @@ private fun Header(movie: Movie, modifier: Modifier = Modifier) {
                     .memoryCacheKey("movieImage${movie.movieId ?: 0}")
                     .build(),
                 modifier = Modifier
-                    .padding(start = 16.dp, top = (backdropHeight - 48).dp)
+                    .padding(top = (backdropHeight - 48).dp)
                     .weight(1f)
                     .dropShadow(RoundedCornerShape(4.dp), Shadow(4.dp))
                     .clip(RoundedCornerShape(4.dp))
@@ -132,7 +135,7 @@ private fun Header(movie: Movie, modifier: Modifier = Modifier) {
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .padding(top = (backdropHeight + 16).dp)
+                    .padding(top = backdropHeight.dp)
             ) {
                 Text(movie.title.orEmpty(), style = MaterialTheme.typography.titleLarge)
                 Text(movie.releaseDate.orEmpty())
