@@ -36,6 +36,7 @@ import coil3.request.crossfade
 import com.example.movies.R
 import com.example.movies.data.db.model.Movie
 import com.example.movies.ui.LocalSharedElementScope
+import com.example.movies.util.toFormattedDate
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -138,7 +139,7 @@ private fun Header(movie: Movie, modifier: Modifier = Modifier) {
                     .padding(top = backdropHeight.dp)
             ) {
                 Text(movie.title.orEmpty(), style = MaterialTheme.typography.titleLarge)
-                Text(movie.releaseDate.orEmpty())
+                Text(movie.releaseDate?.toFormattedDate().orEmpty())
                 movie.voteAverage?.let {
                     Text("$it/10")
                 }
