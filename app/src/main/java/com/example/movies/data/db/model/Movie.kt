@@ -1,5 +1,6 @@
 package com.example.movies.data.db.model
 
+import androidx.core.util.toHalf
 import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.Ignore
@@ -7,6 +8,7 @@ import androidx.room.Junction
 import androidx.room.PrimaryKey
 import androidx.room.Relation
 import kotlinx.serialization.Serializable
+import kotlin.math.roundToInt
 import com.example.movies.data.api.model.Movie as ApiMovie
 
 
@@ -33,6 +35,12 @@ data class Movie(
 
     @Ignore
     val fullBackdropPath = "https://image.tmdb.org/t/p/w780/$backdropPath"
+
+    @Ignore
+    val voteForDisplay: String? = voteAverage?.let {
+        val v = (it * 10).roundToInt() / 10f
+        "$v / 10"
+    }
 
     companion object {
         fun fromAPIModel(movie: ApiMovie): Movie {

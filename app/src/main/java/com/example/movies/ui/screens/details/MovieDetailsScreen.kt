@@ -140,8 +140,8 @@ private fun Header(movie: Movie, modifier: Modifier = Modifier) {
             ) {
                 Text(movie.title.orEmpty(), style = MaterialTheme.typography.titleLarge)
                 Text(movie.releaseDate?.toFormattedDate().orEmpty())
-                movie.voteAverage?.let {
-                    Text("$it/10")
+                movie.voteForDisplay?.let {
+                    Text(it)
                 }
             }
         }
