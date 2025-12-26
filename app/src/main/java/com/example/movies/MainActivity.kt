@@ -40,9 +40,9 @@ class MainActivity : ComponentActivity() {
                                         })
                                 }
                                 entry<MovieDetails> {
-                                    MovieDetailsScreen(it.movie) {
+                                    MovieDetailsScreen(it.movie, {
                                         backStack.removeLastOrNull()
-                                    }
+                                    })
                                 }
                             }
                         )

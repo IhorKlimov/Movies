@@ -29,18 +29,28 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation3.ui.LocalNavAnimatedContentScope
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.example.movies.R
+import com.example.movies.data.db.model.Genre
 import com.example.movies.data.db.model.Movie
 import com.example.movies.ui.LocalSharedElementScope
 import com.example.movies.util.toFormattedDate
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MovieDetailsScreen(movie: Movie, onBackPressed: () -> Unit) {
+fun MovieDetailsScreen(
+    movie: Movie,
+    onBackPressed: () -> Unit,
+    viewModel: MovieDetailsViewModel = hiltViewModel<MovieDetailsViewModel, MovieDetailsViewModel.Factory>(
+        key = "${movie.movieId}",
+        creationCallback = {
+            it.create(movie.movieId ?: -1)
+        })
+) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -72,7 +82,7 @@ fun MovieDetailsScreen(movie: Movie, onBackPressed: () -> Unit) {
         ) {
             Box {
                 Backdrop(movie)
-                Header(movie)
+                Header(movie, viewModel.genres)
             }
 
             Column(
@@ -101,7 +111,7 @@ private fun Backdrop(
 }
 
 @Composable
-private fun Header(movie: Movie, modifier: Modifier = Modifier) {
+private fun Header(movie: Movie, genres: List<Genre>, modifier: Modifier = Modifier) {
     val current = LocalConfiguration.current
 
     val sharedElementScope = LocalSharedElementScope.current
@@ -142,6 +152,11 @@ private fun Header(movie: Movie, modifier: Modifier = Modifier) {
                 Text(movie.releaseDate?.toFormattedDate().orEmpty())
                 movie.voteForDisplay?.let {
                     Text(it)
+                }
+                if (genres.isNotEmpty()) {
+                    Text(
+                        genres.mapNotNull { it.name }.joinToString(transform = { it })
+                    )
                 }
             }
         }

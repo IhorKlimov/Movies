@@ -1,7 +1,7 @@
 package com.example.movies.di
 
 import com.example.movies.data.network.AuthenticationInterceptor
-import com.example.movies.data.repository.MoviesRepository
+import com.example.movies.data.repository.GenresRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -14,10 +14,11 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-object MoviesModule {
-    @Singleton
+object GenresModule {
+
     @Provides
-    fun getMoviesRepository(): MoviesRepository {
+    @Singleton
+    fun getGenresRepository(): GenresRepository {
         val client = OkHttpClient.Builder()
             .addInterceptor(AuthenticationInterceptor())
             .build()
@@ -29,6 +30,6 @@ object MoviesModule {
                 json.asConverterFactory("application/json; charset=UTF8".toMediaType())
             )
             .build()
-            .create(MoviesRepository::class.java)
+            .create(GenresRepository::class.java)
     }
 }
