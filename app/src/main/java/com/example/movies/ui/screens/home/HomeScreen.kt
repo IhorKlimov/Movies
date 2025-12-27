@@ -13,8 +13,10 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.ui.LocalNavAnimatedContentScope
+import com.example.movies.R
 import com.example.movies.data.db.model.Movie
 import com.example.movies.ui.LocalSharedElementScope
 import com.example.movies.ui.screens.home.widgets.ErrorState
@@ -33,7 +35,7 @@ fun HomeScreen(
                 topBar = {
                     TopAppBar(
                         title = {
-                            Text("Movies")
+                            Text(stringResource(R.string.app_name))
                         },
                         colors = TopAppBarDefaults.topAppBarColors(
                             containerColor = MaterialTheme.colorScheme.primaryContainer,
