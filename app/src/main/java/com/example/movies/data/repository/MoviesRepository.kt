@@ -1,20 +1,22 @@
 package com.example.movies.data.repository
 
-import com.example.movies.data.api.model.DiscoverResponse
+import com.example.movies.data.api.model.MoviesResponse
 import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Query
 
-// https://api.themoviedb.org/3/discover/movie
-// ?include_adult=false
-// &include_video=false
-// &language=en-US
-// &page=1
-// &sort_by=popularity.desc
-
-
-
 interface MoviesRepository {
     @GET("discover/movie")
-    suspend fun discover(@Query("page") page: Int): Response<DiscoverResponse>
+    suspend fun discover(@Query("page") page: Int): Response<MoviesResponse>
+
+    @GET("search/movie")
+    suspend fun searchMovie(
+        @Query("query") query: String,
+        @Query("include_adult") includeAdult: Boolean? = null,
+        @Query("language") language: String?= null,
+        @Query("primary_release_language") primaryReleaseLanguage: String?= null,
+        @Query("page") page: Int?= null,
+        @Query("region") region: String?= null,
+        @Query("year") year: String?= null,
+    ): Response<MoviesResponse>
 }

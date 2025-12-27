@@ -4,7 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class DiscoverResponse(
+data class MoviesResponse(
     val page: Int? = null,
     val results: List<Movie?>? = null,
     @SerialName("total_pages")

@@ -1,6 +1,6 @@
 package com.example.movies
 
-import com.example.movies.data.api.model.DiscoverResponse
+import com.example.movies.data.api.model.MoviesResponse
 import com.example.movies.data.db.model.Movie
 import com.example.movies.data.repository.MoviesRepository
 import com.example.movies.ui.screens.home.HomeViewModel
@@ -39,7 +39,7 @@ class HomeViewModelTest {
                 discover(1)
             }.doReturn(
                 Response.success(
-                    DiscoverResponse(
+                    MoviesResponse(
                         1,
                         listOf(
                             Movie(

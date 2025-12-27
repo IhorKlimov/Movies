@@ -3,6 +3,7 @@ package com.example.movies.ui.screens.home
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.movies.data.db.model.Movie
@@ -17,7 +18,12 @@ fun HomeScreen(
     viewModel: HomeViewModel = viewModel()
 ) {
     Scaffold(
-        topBar = { HomeAppBar({}) }
+        topBar = {
+            HomeAppBar(
+                viewModel.query.collectAsState().value,
+                viewModel::onQueryChange
+            )
+        }
     ) { padding ->
         if (viewModel.isLoading && viewModel.movies.isEmpty()) {
             InitialLoadingState(modifier = Modifier.padding(padding))
