@@ -1,3 +1,6 @@
 <resources>
     <string name="app_name">Movies</string>
+    <string name="search_icon">Search icon</string>
+    <string name="close_search">Close search</string>
+    <string name="reset_search">Reset search</string>
 </resources>
