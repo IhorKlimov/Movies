@@ -1,0 +1,138 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 2,
+    "identityHash": "6713ebe8ec8493b82110c28e125a6ffa",
+    "entities": [
+      {
+        "tableName": "Movie",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`adult` INTEGER, `backdropPath` TEXT, `movieId` INTEGER, `originalLanguage` TEXT, `originalTitle` TEXT, `overview` TEXT, `popularity` REAL, `posterPath` TEXT, `releaseDate` TEXT, `title` TEXT, `video` INTEGER, `voteAverage` REAL, `voteCount` INTEGER, PRIMARY KEY(`movieId`))",
+        "fields": [
+          {
+            "fieldPath": "adult",
+            "columnName": "adult",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "backdropPath",
+            "columnName": "backdropPath",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "movieId",
+            "columnName": "movieId",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "originalLanguage",
+            "columnName": "originalLanguage",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "originalTitle",
+            "columnName": "originalTitle",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "overview",
+            "columnName": "overview",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "popularity",
+            "columnName": "popularity",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "posterPath",
+            "columnName": "posterPath",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "releaseDate",
+            "columnName": "releaseDate",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "video",
+            "columnName": "video",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "voteAverage",
+            "columnName": "voteAverage",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "voteCount",
+            "columnName": "voteCount",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "movieId"
+          ]
+        }
+      },
+      {
+        "tableName": "Genre",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`genreId` INTEGER NOT NULL, `name` TEXT, PRIMARY KEY(`genreId`))",
+        "fields": [
+          {
+            "fieldPath": "genreId",
+            "columnName": "genreId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "genreId"
+          ]
+        }
+      },
+      {
+        "tableName": "MovieWithGenreRef",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`movieId` INTEGER NOT NULL, `genreId` INTEGER NOT NULL, PRIMARY KEY(`movieId`, `genreId`))",
+        "fields": [
+          {
+            "fieldPath": "movieId",
+            "columnName": "movieId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "genreId",
+            "columnName": "genreId",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "movieId",
+            "genreId"
+          ]
+        }
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '6713ebe8ec8493b82110c28e125a6ffa')"
+    ]
+  }
+}
