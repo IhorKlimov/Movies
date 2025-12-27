@@ -59,15 +59,15 @@ fun MovieDetailsScreen(
             it.create(movie.movieId ?: -1)
         })
 ) {
+    val density = LocalDensity.current
+    val systemBarHeight = ceil((WindowInsets.statusBars.getTop(density) / density.density)).dp
+
     Scaffold(
         topBar = {
-            val density = LocalDensity.current
-            val height = ceil((WindowInsets.statusBars.getTop(density) / density.density)).dp
-
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(height)
+                    .height(systemBarHeight)
                     .background(
                         MaterialTheme.colorScheme.primaryContainer
                     )
@@ -75,48 +75,59 @@ fun MovieDetailsScreen(
         }
     ) { padding ->
         val scroll = rememberScrollState()
-        Column(
-            modifier = Modifier
-                .padding(padding)
-                .verticalScroll(scroll),
-        ) {
-            Box {
-                Backdrop(movie)
-                Header(movie, viewModel.genres)
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(TopAppBarDefaults.TopAppBarExpandedHeight)
-                        .background(
-                            Brush.verticalGradient(
-                                listOf(Color.Black, Color.Transparent)
-                            )
-                        )
+        Box {
+            Column(
+                modifier = Modifier
+                    .padding(padding)
+                    .verticalScroll(scroll),
+            ) {
+                Box {
+                    Backdrop(movie)
+                    Header(movie, viewModel.genres)
+                }
+
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    IconButton(
-                        onClick = onBackPressed,
-                        modifier = Modifier
-                            .align(Alignment.CenterStart)
-                            .padding(start = 4.dp)
-                    ) {
-                        Icon(
-                            painterResource(R.drawable.outline_arrow_back_24),
-                            tint = Color.White,
-                            contentDescription = null
-                        )
-                    }
+                    HorizontalDivider()
+                    Description(movie)
                 }
             }
-
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                HorizontalDivider()
-                Description(movie)
-            }
+            AppBar(onBackPressed, modifier = Modifier.padding(top = systemBarHeight))
         }
     }
+}
+
+@Composable
+private fun AppBar(
+    onBackPressed: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(TopAppBarDefaults.TopAppBarExpandedHeight)
+            .background(
+                Brush.verticalGradient(
+                    listOf(Color.Black, Color.Transparent)
+                )
+            )
+    ) {
+        IconButton(
+            onClick = onBackPressed,
+            modifier = Modifier
+                .align(Alignment.CenterStart)
+                .padding(start = 4.dp)
+        ) {
+            Icon(
+                painterResource(R.drawable.outline_arrow_back_24),
+                tint = Color.White,
+                contentDescription = null
+            )
+        }
+    }
+
 }
 
 @Composable
