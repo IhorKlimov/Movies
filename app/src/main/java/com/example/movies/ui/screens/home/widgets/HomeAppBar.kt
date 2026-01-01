@@ -7,9 +7,12 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -37,7 +40,6 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation3.ui.LocalNavAnimatedContentScope
 import com.example.movies.R
 import com.example.movies.ui.LocalSharedElementScope
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
 
 @Composable
@@ -46,6 +48,7 @@ import kotlinx.coroutines.delay
 fun HomeAppBar(
     query: String,
     onQueryChange: (String) -> Unit,
+    onSearchSettingsClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var showSearchBar by remember { mutableStateOf(false) }
@@ -64,14 +67,10 @@ fun HomeAppBar(
                 ),
                 actions = {
                     if (!showSearchBar) {
-                        IconButton(
-                            onClick = { showSearchBar = true }
-                        ) {
-                            Icon(
-                                painterResource(R.drawable.baseline_search_24),
-                                contentDescription = stringResource(R.string.search_icon),
-                            )
-                        }
+                        Actions(
+                            { showSearchBar = true },
+                            onSearchSettingsClick
+                        )
                     } else {
                         SearchBar(
                             query,
@@ -91,7 +90,51 @@ fun HomeAppBar(
     }
 }
 
-@OptIn(FlowPreview::class)
+@Composable
+private fun Actions(
+    onSearchClick: () -> Unit,
+    onSearchSettingsClick: () -> Unit
+) {
+    IconButton(onClick = onSearchClick) {
+        Icon(
+            painterResource(R.drawable.baseline_search_24),
+            contentDescription = stringResource(R.string.search_icon),
+        )
+    }
+    Menu(onSearchSettingsClick)
+}
+
+@Composable
+private fun Menu(
+    onSearchSettingsClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var isExpanded by remember { mutableStateOf(false) }
+
+    Box(modifier = modifier) {
+        IconButton(
+            onClick = { isExpanded = !isExpanded },
+        ) {
+            Icon(
+                painterResource(R.drawable.baseline_more_vert_24),
+                contentDescription = stringResource(R.string.search_menu),
+            )
+        }
+        DropdownMenu(
+            expanded = isExpanded,
+            onDismissRequest = { isExpanded = false }
+        ) {
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.search_settings)) },
+                onClick = {
+                    isExpanded = false
+                    onSearchSettingsClick()
+                }
+            )
+        }
+    }
+}
+
 @Composable
 private fun SearchBar(
     query: String,
@@ -99,7 +142,7 @@ private fun SearchBar(
     onClose: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val showCrossIcon by derivedStateOf { query.isNotEmpty() }
+    val showCrossIcon by remember { derivedStateOf { query.isNotEmpty() } }
     val focusRequester = remember { FocusRequester() }
     LaunchedEffect(Unit) {
         delay(100)
@@ -119,7 +162,9 @@ private fun SearchBar(
         TextField(
             value = query,
             onValueChange = onQueryChange,
-            modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
+            modifier = Modifier
+                .fillMaxWidth()
+                .focusRequester(focusRequester),
             colors = TextFieldDefaults.colors().copy(
                 focusedContainerColor = Color.Transparent,
                 unfocusedContainerColor = Color.Transparent

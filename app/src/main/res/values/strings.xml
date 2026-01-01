@@ -3,4 +3,24 @@
     <string name="search_icon">Search icon</string>
     <string name="close_search">Close search</string>
     <string name="reset_search">Reset search</string>
+    <string name="search_menu">Search menu</string>
+    <string name="search_settings">Search settings</string>
+    <string name="sort_by">Sort by</string>
+    <string name="go_back">Go back</string>
+    <string name="dropdown_icon">Dropdown icon</string>
+
+    <string name="original_title_asc">Original title, ascending</string>
+    <string name="original_title_desc">Original title, descending</string>
+    <string name="revenue_asc">Revenue, ascending</string>
+    <string name="revenue_desc">Revenue, descending</string>
+    <string name="primary_release_date_asc">Primary release date, ascending</string>
+    <string name="primary_release_date_desc">Primary release date, descending</string>
+    <string name="title_asc">Title, ascending</string>
+    <string name="title_desc">Title, descending</string>
+    <string name="vote_average_asc">Vote, ascending</string>
+    <string name="vote_average_desc">Vote, descending</string>
+    <string name="popularity_asc">Popularity, ascending</string>
+    <string name="popularity_desc">Popularity, descending</string>
+    <string name="vote_count_asc">Vote count, ascending</string>
+    <string name="vote_count_desc">Vote count, descending</string>
 </resources>

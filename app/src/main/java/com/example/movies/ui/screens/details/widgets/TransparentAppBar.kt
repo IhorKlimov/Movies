@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.movies.R
 
@@ -41,9 +42,8 @@ fun TransparentAppBar(
             Icon(
                 painterResource(R.drawable.outline_arrow_back_24),
                 tint = Color.White,
-                contentDescription = null
+                contentDescription = stringResource(R.string.go_back)
             )
         }
     }
-
 }

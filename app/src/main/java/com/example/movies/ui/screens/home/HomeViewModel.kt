@@ -8,6 +8,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.movies.data.api.model.DiscoverSortBy
 import com.example.movies.data.api.model.MoviesResponse
 import com.example.movies.data.db.MovieDatabase
 import com.example.movies.data.db.model.Genre
@@ -16,12 +17,14 @@ import com.example.movies.data.db.model.MovieWithGenre
 import com.example.movies.data.db.model.MovieWithGenreRef
 import com.example.movies.data.repository.GenresRepository
 import com.example.movies.data.repository.MoviesRepository
+import com.example.movies.ui.screens.home.settings.DiscoverSettings
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import retrofit2.Response
 import javax.inject.Inject
@@ -45,6 +48,13 @@ open class HomeViewModel @Inject constructor(
     private val _query = MutableStateFlow("")
     val query: StateFlow<String> = _query
 
+    private val _searchSettings = MutableStateFlow(
+        DiscoverSettings(
+            DiscoverSortBy.POPULARITY_DESC
+        )
+    )
+    val searchSettings: StateFlow<DiscoverSettings> = _searchSettings
+
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
     var currentPage = 1
     var isFetchEnabled by mutableStateOf(true)
@@ -55,6 +65,14 @@ open class HomeViewModel @Inject constructor(
         fetchMovieGenres()
         viewModelScope.launch {
             query.debounceIfNotEmpty().collect {
+                currentPage = 1
+                isFetchEnabled = true
+                movies.clear()
+                fetchMovies()
+            }
+        }
+        viewModelScope.launch {
+            searchSettings.drop(1).collect {
                 currentPage = 1
                 isFetchEnabled = true
                 movies.clear()
@@ -76,7 +94,7 @@ open class HomeViewModel @Inject constructor(
                         page = currentPage
                     )
                 } else {
-                    moviesRepository.discover(currentPage)
+                    moviesRepository.discover(currentPage, searchSettings.value.sortBy.apiValue)
                 }
 
                 if (result.isSuccessful) {
@@ -89,7 +107,12 @@ open class HomeViewModel @Inject constructor(
                 if (isRefreshing) {
                     movies.clear()
                 }
-                movies.addAll(database.movieDao().getAllMoviesWithGenres())
+                movies.addAll(
+                    database.movieDao().selectAllMoviesWithGenres(
+                        searchSettings.value.sortBy.sqlValue
+                            ?: DiscoverSortBy.POPULARITY_DESC.sqlValue.orEmpty()
+                    )
+                )
                 isFetchEnabled = false
             }
 
@@ -130,10 +153,20 @@ open class HomeViewModel @Inject constructor(
 
         saveToDatabase(newPage)
 
-        movies.addAll(
-            database.movieDao()
-                .selectMoviesWithGenresByIds(newPage.mapNotNull { it.id })
-        )
+        searchSettings.value.sortBy.sqlValue?.let { sortBy ->
+            movies.addAll(
+                database.movieDao()
+                    .selectMoviesWithGenresByIds(
+                        newPage.mapNotNull { it.id },
+                        sortBy
+                    )
+            )
+        } ?: run {
+            // SQL value is null, meaning unsupported. Select using one by one with the API order.
+            newPage.mapNotNull { it.id }.forEach {
+                movies.add(database.movieDao().selectMovieWithGenresById(it))
+            }
+        }
 
         if (currentPage == result.body()?.totalPages) {
             isFetchEnabled = false
@@ -152,6 +185,10 @@ open class HomeViewModel @Inject constructor(
 
     fun onQueryChange(query: String) {
         _query.value = query
+    }
+
+    fun onSearchSettingsChange(searchSettings: DiscoverSettings) {
+        _searchSettings.value = searchSettings
     }
 
     private suspend fun saveToDatabase(newPage: List<APIMovie>) {
