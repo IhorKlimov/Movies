@@ -22,7 +22,7 @@ fun HomeScreen(
     Scaffold(
         topBar = {
             HomeAppBar(
-                viewModel.query.collectAsState().value,
+                viewModel.query.collectAsState(),
                 viewModel::onQueryChange,
                 { onSearchSettingsClick(viewModel.searchSettings.value) }
             )

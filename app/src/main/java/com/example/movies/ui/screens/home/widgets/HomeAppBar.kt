@@ -24,6 +24,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -46,7 +47,7 @@ import kotlinx.coroutines.delay
 @OptIn(ExperimentalMaterial3Api::class)
 @Suppress("AssignedValueIsNeverRead")
 fun HomeAppBar(
-    query: String,
+    query: State<String>,
     onQueryChange: (String) -> Unit,
     onSearchSettingsClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -137,12 +138,12 @@ private fun Menu(
 
 @Composable
 private fun SearchBar(
-    query: String,
+    query: State<String>,
     onQueryChange: (String) -> Unit,
     onClose: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val showCrossIcon by remember { derivedStateOf { query.isNotEmpty() } }
+    val showCrossIcon by remember { derivedStateOf { query.value.isNotEmpty() } }
     val focusRequester = remember { FocusRequester() }
     LaunchedEffect(Unit) {
         delay(100)
@@ -160,7 +161,7 @@ private fun SearchBar(
             )
         }
         TextField(
-            value = query,
+            value = query.value,
             onValueChange = onQueryChange,
             modifier = Modifier
                 .fillMaxWidth()
