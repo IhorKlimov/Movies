@@ -1,11 +1,11 @@
-package com.example.movies.data.repository
+package com.example.movies.data.repository.movies
 
 import com.example.movies.data.api.model.MoviesResponse
 import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Query
 
-interface MoviesRepository {
+interface MoviesRemoteSource {
     @GET("discover/movie")
     suspend fun discover(
         @Query("page") page: Int,

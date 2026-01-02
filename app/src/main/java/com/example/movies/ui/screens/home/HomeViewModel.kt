@@ -11,16 +11,14 @@ import androidx.lifecycle.viewModelScope
 import com.example.movies.data.api.model.DiscoverSortBy
 import com.example.movies.data.api.model.MoviesResponse
 import com.example.movies.data.db.MovieDatabase
-import com.example.movies.data.db.model.Genre
 import com.example.movies.data.db.model.Movie
 import com.example.movies.data.db.model.MovieWithGenre
 import com.example.movies.data.db.model.MovieWithGenreRef
-import com.example.movies.data.repository.GenresRepository
-import com.example.movies.data.repository.MoviesRepository
+import com.example.movies.data.repository.genres.GenresRepository
+import com.example.movies.data.repository.movies.MoviesRemoteSource
 import com.example.movies.ui.screens.home.settings.DiscoverSettings
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.debounce
@@ -36,7 +34,7 @@ private const val logTag = "HomeViewModel"
 @HiltViewModel
 open class HomeViewModel @Inject constructor(
     private val database: MovieDatabase,
-    private val moviesRepository: MoviesRepository,
+    private val moviesRepository: MoviesRemoteSource,
     private val genresRepository: GenresRepository
 ) : ViewModel() {
     open val movies = mutableStateListOf<MovieWithGenre>()
@@ -64,7 +62,9 @@ open class HomeViewModel @Inject constructor(
     init {
         fetchMovieGenres()
         viewModelScope.launch {
-            query.debounceIfNotEmpty().collect {
+            query.debounce {
+                if (it.isEmpty()) 0 else 1000
+            }.collect {
                 currentPage = 1
                 isFetchEnabled = true
                 movies.clear()
@@ -123,21 +123,7 @@ open class HomeViewModel @Inject constructor(
 
     private fun fetchMovieGenres() {
         viewModelScope.launch {
-            val numOfGenres = database.genreDao().getAll().size
-            if (numOfGenres == 0) {
-                val response = genresRepository.getMovieGenres()
-                try {
-                    if (response.isSuccessful) {
-                        response.body()
-                            ?.genres
-                            ?.filterNotNull()
-                            ?.map { Genre(it.id ?: -1, it.name) }
-                            ?.let { database.genreDao().insertAll(it) }
-                    }
-                } catch (e: Exception) {
-                    Log.e(logTag, "fetchMovieGenres: ", e)
-                }
-            }
+            genresRepository.fetchMovieGenres()
         }
     }
 
@@ -203,12 +189,5 @@ open class HomeViewModel @Inject constructor(
                 } ?: listOf()
             }
         )
-
-    }
-
-    private fun Flow<String>.debounceIfNotEmpty(): Flow<String> {
-        return debounce {
-            if (it.isEmpty()) 0 else 1000
-        }
     }
 }

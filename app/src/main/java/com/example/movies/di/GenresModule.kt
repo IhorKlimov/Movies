@@ -1,7 +1,11 @@
 package com.example.movies.di
 
+import com.example.movies.data.db.MovieDatabase
 import com.example.movies.data.network.AuthenticationInterceptor
-import com.example.movies.data.repository.GenresRepository
+import com.example.movies.data.repository.genres.GenresLocalSource
+import com.example.movies.data.repository.genres.GenresRemoteSource
+import com.example.movies.data.repository.genres.GenresRepository
+import com.example.movies.data.repository.genres.GenresRepositoryImpl
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -18,7 +22,7 @@ object GenresModule {
 
     @Provides
     @Singleton
-    fun getGenresRepository(): GenresRepository {
+    fun getGenresRemoteSource(): GenresRemoteSource {
         val client = OkHttpClient.Builder()
             .addInterceptor(AuthenticationInterceptor())
             .build()
@@ -30,6 +34,21 @@ object GenresModule {
                 json.asConverterFactory("application/json; charset=UTF8".toMediaType())
             )
             .build()
-            .create(GenresRepository::class.java)
+            .create(GenresRemoteSource::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun getGenresLocalSource(database: MovieDatabase): GenresLocalSource {
+        return GenresLocalSource(database)
+    }
+
+    @Provides
+    @Singleton
+    fun getGenresRepository(
+        localSource: GenresLocalSource,
+        remoteSource: GenresRemoteSource
+    ): GenresRepository {
+        return GenresRepositoryImpl(remoteSource, localSource)
     }
 }

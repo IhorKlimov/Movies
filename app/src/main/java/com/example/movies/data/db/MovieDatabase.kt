@@ -15,7 +15,6 @@ import com.example.movies.data.db.model.MovieWithGenreRef
     entities = [Movie::class, Genre::class, MovieWithGenreRef::class],
     version = 2,
 )
-@TypeConverters(Converters::class)
 abstract class MovieDatabase : RoomDatabase() {
     abstract fun movieDao(): MovieDao
     abstract fun genreDao(): GenreDao
