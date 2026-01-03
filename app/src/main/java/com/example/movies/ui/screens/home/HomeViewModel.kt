@@ -121,15 +121,15 @@ open class HomeViewModel @Inject constructor(
         }
     }
 
-    private fun handleMovieResponseSuccess(result: MoviesResponse) {
+    private fun handleMovieResponseSuccess(response: MoviesResponse) {
         if (isRefreshing) movies.clear()
 
-        val newPage = result.results
+        val newPage = response.results
             .filter { m -> movies.firstOrNull { it.movie.movieId == m.movie.movieId } == null }
 
         movies.addAll(newPage)
 
-        if (result.hasMore) {
+        if (response.hasMore) {
             currentPage++
         } else {
             isFetchEnabled = false
