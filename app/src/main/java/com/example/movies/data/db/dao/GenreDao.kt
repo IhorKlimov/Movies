@@ -12,6 +12,9 @@ interface GenreDao {
     @Query("SELECT * FROM Genre")
     suspend fun getAll(): List<Genre>
 
+    @Query("SELECT * FROM Genre LIMIT 1")
+    suspend fun getFirstGenre(): Genre?
+
     @Query(
         "SELECT * FROM MovieWithGenreRef " +
                 "INNER JOIN Genre on Genre.genreId = MovieWithGenreRef.genreId " +

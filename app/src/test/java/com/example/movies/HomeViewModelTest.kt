@@ -1,8 +1,8 @@
 package com.example.movies
 
-import com.example.movies.data.api.model.DiscoverResponse
+import com.example.movies.data.api.model.MoviesResponse
 import com.example.movies.data.db.model.Movie
-import com.example.movies.data.repository.MoviesRepository
+import com.example.movies.data.repository.movies.MoviesRemoteSource
 import com.example.movies.ui.screens.home.HomeViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -29,7 +29,7 @@ class HomeViewModelTest {
     private val dispatcher = StandardTestDispatcher()
 
     @Mock
-    private lateinit var repository: MoviesRepository
+    private lateinit var repository: MoviesRemoteSource
 
     @Before
     fun setUp() {
@@ -39,7 +39,7 @@ class HomeViewModelTest {
                 discover(1)
             }.doReturn(
                 Response.success(
-                    DiscoverResponse(
+                    MoviesResponse(
                         1,
                         listOf(
                             Movie(

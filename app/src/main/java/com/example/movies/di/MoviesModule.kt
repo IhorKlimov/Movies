@@ -1,7 +1,11 @@
 package com.example.movies.di
 
+import com.example.movies.data.db.MovieDatabase
 import com.example.movies.data.network.AuthenticationInterceptor
-import com.example.movies.data.repository.MoviesRepository
+import com.example.movies.data.repository.movies.MoviesLocalSource
+import com.example.movies.data.repository.movies.MoviesRemoteSource
+import com.example.movies.data.repository.movies.MoviesRepository
+import com.example.movies.data.repository.movies.MoviesRepositoryImpl
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -17,7 +21,7 @@ import javax.inject.Singleton
 object MoviesModule {
     @Singleton
     @Provides
-    fun getMoviesRepository(): MoviesRepository {
+    fun getMoviesRemoteSource(): MoviesRemoteSource {
         val client = OkHttpClient.Builder()
             .addInterceptor(AuthenticationInterceptor())
             .build()
@@ -29,6 +33,21 @@ object MoviesModule {
                 json.asConverterFactory("application/json; charset=UTF8".toMediaType())
             )
             .build()
-            .create(MoviesRepository::class.java)
+            .create(MoviesRemoteSource::class.java)
+    }
+
+    @Singleton
+    @Provides
+    fun getMoviesLocalSource(database: MovieDatabase): MoviesLocalSource {
+        return MoviesLocalSource(database)
+    }
+
+    @Singleton
+    @Provides
+    fun getMoviesRepository(
+        localSource: MoviesLocalSource,
+        remoteSource: MoviesRemoteSource
+    ): MoviesRepository {
+        return MoviesRepositoryImpl(localSource, remoteSource)
     }
 }

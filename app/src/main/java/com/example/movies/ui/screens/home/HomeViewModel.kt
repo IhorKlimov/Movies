@@ -1,6 +1,5 @@
 package com.example.movies.ui.screens.home
 
-import android.util.Log
 import androidx.annotation.VisibleForTesting
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -8,25 +7,26 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.movies.data.api.model.DiscoverResponse
-import com.example.movies.data.db.MovieDatabase
-import com.example.movies.data.db.model.Genre
-import com.example.movies.data.db.model.Movie
+import com.example.movies.data.api.model.DiscoverSortBy
 import com.example.movies.data.db.model.MovieWithGenre
-import com.example.movies.data.db.model.MovieWithGenreRef
-import com.example.movies.data.repository.GenresRepository
-import com.example.movies.data.repository.MoviesRepository
+import com.example.movies.data.db.model.MoviesResponse
+import com.example.movies.data.repository.genres.GenresRepository
+import com.example.movies.data.repository.movies.MoviesRepository
+import com.example.movies.ui.screens.home.settings.DiscoverSettings
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
-import retrofit2.Response
 import javax.inject.Inject
-import com.example.movies.data.api.model.Movie as APIMovie
 
 private const val logTag = "HomeViewModel"
 
+@OptIn(FlowPreview::class)
 @HiltViewModel
 open class HomeViewModel @Inject constructor(
-    private val database: MovieDatabase,
     private val moviesRepository: MoviesRepository,
     private val genresRepository: GenresRepository
 ) : ViewModel() {
@@ -36,13 +36,36 @@ open class HomeViewModel @Inject constructor(
     var isRefreshing by mutableStateOf(false)
     open var error by mutableStateOf<String?>(null)
 
+    private val _query = MutableStateFlow("")
+    val query: StateFlow<String> = _query
+
+    private val _searchSettings = MutableStateFlow(
+        DiscoverSettings(
+            DiscoverSortBy.POPULARITY_DESC
+        )
+    )
+    val searchSettings: StateFlow<DiscoverSettings> = _searchSettings
+
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
     var currentPage = 1
     var isFetchEnabled by mutableStateOf(true)
         private set
 
+
     init {
-        fetchMovies()
+        fetchMovieGenres()
+        viewModelScope.launch {
+            query.debounce {
+                if (it.isEmpty()) 0 else 1000
+            }.collect {
+                fetchMoviesFromBeginning()
+            }
+        }
+        viewModelScope.launch {
+            searchSettings.drop(1).collect {
+                fetchMoviesFromBeginning()
+            }
+        }
     }
 
     fun fetchMovies() {
@@ -50,23 +73,22 @@ open class HomeViewModel @Inject constructor(
         isLoading = true
 
         viewModelScope.launch {
-            fetchMovieGenres()
+            val q = query.value
+            val result = if (q.isNotEmpty()) {
+                moviesRepository.searchMovie(
+                    query = q,
+                    page = currentPage,
+                    sortBy = searchSettings.value.sortBy
+                )
+            } else {
+                moviesRepository.discover(currentPage, searchSettings.value.sortBy)
+            }
 
-            try {
-                val result = moviesRepository.discover(currentPage)
-
-                if (result.isSuccessful) {
-                    handleMovieResponseSuccess(result)
-                } else {
-                    error = result.errorBody()?.string()
-                }
-            } catch (e: Exception) {
-                Log.e(logTag, "fetchMovies: $e")
-                if (isRefreshing) {
-                    movies.clear()
-                }
-                movies.addAll(database.movieDao().getAllMoviesWithGenres())
-                isFetchEnabled = false
+            val body = result.body
+            if (result.isSuccess && body != null) {
+                handleMovieResponseSuccess(body)
+            } else {
+                error = result.error
             }
 
             isLoading = false
@@ -74,69 +96,43 @@ open class HomeViewModel @Inject constructor(
         }
     }
 
-    private suspend fun fetchMovieGenres() {
-        val numOfGenres = database.genreDao().getAll().size
-        if (numOfGenres == 0) {
-            val response = genresRepository.getMovieGenres()
-            try {
-                if (response.isSuccessful) {
-                    response.body()
-                        ?.genres
-                        ?.filterNotNull()
-                        ?.map { Genre(it.id ?: -1, it.name) }
-                        ?.let { database.genreDao().insertAll(it) }
-                }
-            } catch (e: Exception) {
-                Log.e(logTag, "fetchMovieGenres: ", e)
-            }
-        }
-    }
-
-    private suspend fun handleMovieResponseSuccess(result: Response<DiscoverResponse>) {
-        if (isRefreshing) {
-            movies.clear()
-        }
-
-        val newPage = result.body()?.results
-            ?.filterNotNull()
-            .orEmpty()
-            .filter { m -> movies.firstOrNull { it.movie.movieId == m.id } == null }
-
-        saveToDatabase(newPage)
-
-        movies.addAll(
-            database.movieDao()
-                .selectMoviesWithGenresByIds(newPage.mapNotNull { it.id })
-        )
-
-        if (currentPage == result.body()?.totalPages) {
-            isFetchEnabled = false
-        } else {
-            currentPage++
-        }
-    }
-
-    fun refresh() {
+    fun fetchMoviesFromBeginning(isRefresh: Boolean = false) {
         isFetchEnabled = true
         currentPage = 1
-        isRefreshing = true
-
+        if (isRefresh) {
+            isRefreshing = true
+        } else {
+            movies.clear()
+        }
         fetchMovies()
     }
 
-    private suspend fun saveToDatabase(newPage: List<APIMovie>) {
-        database.movieDao().insertAll(newPage.map { Movie.fromAPIModel(it) })
-        database.movieWithGenreDao().insertAll(
-            newPage.flatMap { movie ->
-                movie.genreIds?.map { genre ->
-                    MovieWithGenreRef(
-                        movie.id ?: -1,
-                        genre
-                    )
-                } ?: listOf()
-            }
-        )
-
+    fun onQueryChange(query: String) {
+        _query.value = query
     }
 
+    fun onSearchSettingsChange(searchSettings: DiscoverSettings) {
+        _searchSettings.value = searchSettings
+    }
+
+    private fun fetchMovieGenres() {
+        viewModelScope.launch {
+            genresRepository.fetchMovieGenres()
+        }
+    }
+
+    private fun handleMovieResponseSuccess(response: MoviesResponse) {
+        if (isRefreshing) movies.clear()
+
+        val newPage = response.results
+            .filter { m -> movies.firstOrNull { it.movie.movieId == m.movie.movieId } == null }
+
+        movies.addAll(newPage)
+
+        if (response.hasMore) {
+            currentPage++
+        } else {
+            isFetchEnabled = false
+        }
+    }
 }
