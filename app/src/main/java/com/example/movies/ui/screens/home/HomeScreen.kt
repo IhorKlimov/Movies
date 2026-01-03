@@ -38,7 +38,7 @@ fun HomeScreen(
                 viewModel.isLoading,
                 viewModel.isRefreshing,
                 viewModel::fetchMovies,
-                viewModel::refresh,
+                { viewModel.fetchMoviesFromBeginning(true) },
                 onMovieSelected,
                 Modifier.padding(padding)
             )

@@ -1,6 +1,5 @@
 package com.example.movies.ui.screens.home
 
-import android.util.Log
 import androidx.annotation.VisibleForTesting
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -9,13 +8,10 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.movies.data.api.model.DiscoverSortBy
-import com.example.movies.data.api.model.MoviesResponse
-import com.example.movies.data.db.MovieDatabase
-import com.example.movies.data.db.model.Movie
 import com.example.movies.data.db.model.MovieWithGenre
-import com.example.movies.data.db.model.MovieWithGenreRef
+import com.example.movies.data.db.model.MoviesResponse
 import com.example.movies.data.repository.genres.GenresRepository
-import com.example.movies.data.repository.movies.MoviesRemoteSource
+import com.example.movies.data.repository.movies.MoviesRepository
 import com.example.movies.ui.screens.home.settings.DiscoverSettings
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.FlowPreview
@@ -24,17 +20,14 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
-import retrofit2.Response
 import javax.inject.Inject
-import com.example.movies.data.api.model.Movie as APIMovie
 
 private const val logTag = "HomeViewModel"
 
 @OptIn(FlowPreview::class)
 @HiltViewModel
 open class HomeViewModel @Inject constructor(
-    private val database: MovieDatabase,
-    private val moviesRepository: MoviesRemoteSource,
+    private val moviesRepository: MoviesRepository,
     private val genresRepository: GenresRepository
 ) : ViewModel() {
     open val movies = mutableStateListOf<MovieWithGenre>()
@@ -65,18 +58,12 @@ open class HomeViewModel @Inject constructor(
             query.debounce {
                 if (it.isEmpty()) 0 else 1000
             }.collect {
-                currentPage = 1
-                isFetchEnabled = true
-                movies.clear()
-                fetchMovies()
+                fetchMoviesFromBeginning()
             }
         }
         viewModelScope.launch {
             searchSettings.drop(1).collect {
-                currentPage = 1
-                isFetchEnabled = true
-                movies.clear()
-                fetchMovies()
+                fetchMoviesFromBeginning()
             }
         }
     }
@@ -86,34 +73,22 @@ open class HomeViewModel @Inject constructor(
         isLoading = true
 
         viewModelScope.launch {
-            try {
-                val q = query.value
-                val result = if (q.isNotEmpty()) {
-                    moviesRepository.searchMovie(
-                        query = q,
-                        page = currentPage
-                    )
-                } else {
-                    moviesRepository.discover(currentPage, searchSettings.value.sortBy.apiValue)
-                }
-
-                if (result.isSuccessful) {
-                    handleMovieResponseSuccess(result)
-                } else {
-                    error = result.errorBody()?.string()
-                }
-            } catch (e: Exception) {
-                Log.e(logTag, "fetchMovies: $e")
-                if (isRefreshing) {
-                    movies.clear()
-                }
-                movies.addAll(
-                    database.movieDao().selectAllMoviesWithGenres(
-                        searchSettings.value.sortBy.sqlValue
-                            ?: DiscoverSortBy.POPULARITY_DESC.sqlValue.orEmpty()
-                    )
+            val q = query.value
+            val result = if (q.isNotEmpty()) {
+                moviesRepository.searchMovie(
+                    query = q,
+                    page = currentPage,
+                    sortBy = searchSettings.value.sortBy
                 )
-                isFetchEnabled = false
+            } else {
+                moviesRepository.discover(currentPage, searchSettings.value.sortBy)
+            }
+
+            val body = result.body
+            if (result.isSuccess && body != null) {
+                handleMovieResponseSuccess(body)
+            } else {
+                error = result.error
             }
 
             isLoading = false
@@ -121,51 +96,14 @@ open class HomeViewModel @Inject constructor(
         }
     }
 
-    private fun fetchMovieGenres() {
-        viewModelScope.launch {
-            genresRepository.fetchMovieGenres()
-        }
-    }
-
-    private suspend fun handleMovieResponseSuccess(result: Response<MoviesResponse>) {
-        if (isRefreshing) {
-            movies.clear()
-        }
-
-        val newPage = result.body()?.results
-            ?.filterNotNull()
-            .orEmpty()
-            .filter { m -> movies.firstOrNull { it.movie.movieId == m.id } == null }
-
-        saveToDatabase(newPage)
-
-        searchSettings.value.sortBy.sqlValue?.let { sortBy ->
-            movies.addAll(
-                database.movieDao()
-                    .selectMoviesWithGenresByIds(
-                        newPage.mapNotNull { it.id },
-                        sortBy
-                    )
-            )
-        } ?: run {
-            // SQL value is null, meaning unsupported. Select using one by one with the API order.
-            newPage.mapNotNull { it.id }.forEach {
-                movies.add(database.movieDao().selectMovieWithGenresById(it))
-            }
-        }
-
-        if (currentPage == result.body()?.totalPages) {
-            isFetchEnabled = false
-        } else {
-            currentPage++
-        }
-    }
-
-    fun refresh() {
+    fun fetchMoviesFromBeginning(isRefresh: Boolean = false) {
         isFetchEnabled = true
         currentPage = 1
-        isRefreshing = true
-
+        if (isRefresh) {
+            isRefreshing = true
+        } else {
+            movies.clear()
+        }
         fetchMovies()
     }
 
@@ -177,17 +115,24 @@ open class HomeViewModel @Inject constructor(
         _searchSettings.value = searchSettings
     }
 
-    private suspend fun saveToDatabase(newPage: List<APIMovie>) {
-        database.movieDao().insertAll(newPage.map { Movie.fromAPIModel(it) })
-        database.movieWithGenreDao().insertAll(
-            newPage.flatMap { movie ->
-                movie.genreIds?.map { genre ->
-                    MovieWithGenreRef(
-                        movie.id ?: -1,
-                        genre
-                    )
-                } ?: listOf()
-            }
-        )
+    private fun fetchMovieGenres() {
+        viewModelScope.launch {
+            genresRepository.fetchMovieGenres()
+        }
+    }
+
+    private fun handleMovieResponseSuccess(result: MoviesResponse) {
+        if (isRefreshing) movies.clear()
+
+        val newPage = result.results
+            .filter { m -> movies.firstOrNull { it.movie.movieId == m.movie.movieId } == null }
+
+        movies.addAll(newPage)
+
+        if (result.hasMore) {
+            currentPage++
+        } else {
+            isFetchEnabled = false
+        }
     }
 }
