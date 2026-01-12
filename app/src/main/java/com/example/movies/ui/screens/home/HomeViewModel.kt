@@ -53,8 +53,9 @@ open class HomeViewModel @Inject constructor(
 
 
     init {
-        fetchMovieGenres()
         viewModelScope.launch {
+            genresRepository.fetchMovieGenres()
+
             query.debounce {
                 if (it.isEmpty()) 0 else 1000
             }.collect {
@@ -113,12 +114,6 @@ open class HomeViewModel @Inject constructor(
 
     fun onSearchSettingsChange(searchSettings: DiscoverSettings) {
         _searchSettings.value = searchSettings
-    }
-
-    private fun fetchMovieGenres() {
-        viewModelScope.launch {
-            genresRepository.fetchMovieGenres()
-        }
     }
 
     private fun handleMovieResponseSuccess(response: MoviesResponse) {
