@@ -32,12 +32,11 @@ open class HomeViewModel @Inject constructor(
 ) : ViewModel() {
     open val movies = mutableStateListOf<MovieWithGenre>()
     open var isLoading by mutableStateOf(false)
-        private set
     var isRefreshing by mutableStateOf(false)
     open var error by mutableStateOf<String?>(null)
 
-    private val _query = MutableStateFlow("")
-    val query: StateFlow<String> = _query
+    val query: StateFlow<String>
+        field = MutableStateFlow("")
 
     private val _searchSettings = MutableStateFlow(
         DiscoverSettings(
@@ -109,7 +108,7 @@ open class HomeViewModel @Inject constructor(
     }
 
     fun onQueryChange(query: String) {
-        _query.value = query
+        this.query.value = query
     }
 
     fun onSearchSettingsChange(searchSettings: DiscoverSettings) {

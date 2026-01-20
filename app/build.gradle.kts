@@ -52,6 +52,10 @@ android {
 kotlin {
     compilerOptions {
         jvmTarget = JvmTarget.fromTarget("11")
+        freeCompilerArgs.add("-Xexplicit-backing-fields")
+    }
+    sourceSets.all {
+        languageSettings.enableLanguageFeature("ExplicitBackingFields")
     }
 }
 
