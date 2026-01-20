@@ -26,35 +26,38 @@ private const val logTag = "HomeViewModel"
 
 @OptIn(FlowPreview::class)
 @HiltViewModel
-open class HomeViewModel @Inject constructor(
+class HomeViewModel @Inject constructor(
     private val moviesRepository: MoviesRepository,
     private val genresRepository: GenresRepository
 ) : ViewModel() {
-    open val movies = mutableStateListOf<MovieWithGenre>()
-    open var isLoading by mutableStateOf(false)
+    val movies: List<MovieWithGenre>
+        field = mutableStateListOf<MovieWithGenre>()
+    var isLoading by mutableStateOf(false)
         private set
     var isRefreshing by mutableStateOf(false)
-    open var error by mutableStateOf<String?>(null)
-
-    private val _query = MutableStateFlow("")
-    val query: StateFlow<String> = _query
-
-    private val _searchSettings = MutableStateFlow(
-        DiscoverSettings(
-            DiscoverSortBy.POPULARITY_DESC
-        )
-    )
-    val searchSettings: StateFlow<DiscoverSettings> = _searchSettings
-
-    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-    var currentPage = 1
+        private set
+    var error by mutableStateOf<String?>(null)
+        private set
     var isFetchEnabled by mutableStateOf(true)
         private set
 
+    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+    var currentPage = 1
+    val query: StateFlow<String>
+        field = MutableStateFlow("")
+    val searchSettings: StateFlow<DiscoverSettings>
+        field = MutableStateFlow(
+            DiscoverSettings(
+                DiscoverSortBy.POPULARITY_DESC
+            )
+        )
 
     init {
-        fetchMovieGenres()
         viewModelScope.launch {
+            isLoading = true
+            genresRepository.fetchMovieGenres()
+            isLoading = false
+
             query.debounce {
                 if (it.isEmpty()) 0 else 1000
             }.collect {
@@ -108,17 +111,11 @@ open class HomeViewModel @Inject constructor(
     }
 
     fun onQueryChange(query: String) {
-        _query.value = query
+        this.query.value = query
     }
 
     fun onSearchSettingsChange(searchSettings: DiscoverSettings) {
-        _searchSettings.value = searchSettings
-    }
-
-    private fun fetchMovieGenres() {
-        viewModelScope.launch {
-            genresRepository.fetchMovieGenres()
-        }
+        this.searchSettings.value = searchSettings
     }
 
     private fun handleMovieResponseSuccess(response: MoviesResponse) {
