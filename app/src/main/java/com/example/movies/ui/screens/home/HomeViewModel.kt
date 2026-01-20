@@ -38,18 +38,17 @@ open class HomeViewModel @Inject constructor(
     val query: StateFlow<String>
         field = MutableStateFlow("")
 
-    private val _searchSettings = MutableStateFlow(
-        DiscoverSettings(
-            DiscoverSortBy.POPULARITY_DESC
+    val searchSettings: StateFlow<DiscoverSettings>
+        field = MutableStateFlow(
+            DiscoverSettings(
+                DiscoverSortBy.POPULARITY_DESC
+            )
         )
-    )
-    val searchSettings: StateFlow<DiscoverSettings> = _searchSettings
 
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
     var currentPage = 1
     var isFetchEnabled by mutableStateOf(true)
         private set
-
 
     init {
         viewModelScope.launch {
@@ -112,7 +111,7 @@ open class HomeViewModel @Inject constructor(
     }
 
     fun onSearchSettingsChange(searchSettings: DiscoverSettings) {
-        _searchSettings.value = searchSettings
+        this.searchSettings.value = searchSettings
     }
 
     private fun handleMovieResponseSuccess(response: MoviesResponse) {
