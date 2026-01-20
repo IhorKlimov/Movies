@@ -26,14 +26,14 @@ private const val logTag = "HomeViewModel"
 
 @OptIn(FlowPreview::class)
 @HiltViewModel
-open class HomeViewModel @Inject constructor(
+class HomeViewModel @Inject constructor(
     private val moviesRepository: MoviesRepository,
     private val genresRepository: GenresRepository
 ) : ViewModel() {
-    open val movies = mutableStateListOf<MovieWithGenre>()
-    open var isLoading by mutableStateOf(false)
+    val movies = mutableStateListOf<MovieWithGenre>()
+    var isLoading by mutableStateOf(false)
     var isRefreshing by mutableStateOf(false)
-    open var error by mutableStateOf<String?>(null)
+    var error by mutableStateOf<String?>(null)
 
     val query: StateFlow<String>
         field = MutableStateFlow("")
@@ -52,7 +52,9 @@ open class HomeViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
+            isLoading = true
             genresRepository.fetchMovieGenres()
+            isLoading = false
 
             query.debounce {
                 if (it.isEmpty()) 0 else 1000

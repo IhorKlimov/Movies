@@ -1,3 +1,4 @@
+import org.gradle.kotlin.dsl.androidTestImplementation
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -96,11 +97,17 @@ dependencies {
     testImplementation(libs.junit)
 
 //    testImplementation(libs.mockito.core)
-    testImplementation(libs.mockito.kotlin)
+//    testImplementation(libs.mockito.kotlin)
 
-    androidTestImplementation(libs.mockito.core)
-    androidTestImplementation(libs.mockito.kotlin)
-    androidTestImplementation(libs.mockito.android)
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
+    testImplementation("io.mockk:mockk-android:1.14.7")
+    testImplementation("io.mockk:mockk-agent:1.14.7")
+    androidTestImplementation("io.mockk:mockk-android:1.14.7")
+    androidTestImplementation("io.mockk:mockk-agent:1.14.7")
+
+//    androidTestImplementation(libs.mockito.core)
+//    androidTestImplementation(libs.mockito.kotlin)
+//    androidTestImplementation(libs.mockito.android)
 
     testImplementation(libs.kotlinx.coroutines.test)
 
