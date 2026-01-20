@@ -38,21 +38,19 @@ class HomeViewModel @Inject constructor(
         private set
     var error by mutableStateOf<String?>(null)
         private set
+    var isFetchEnabled by mutableStateOf(true)
+        private set
 
+    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+    var currentPage = 1
     val query: StateFlow<String>
         field = MutableStateFlow("")
-
     val searchSettings: StateFlow<DiscoverSettings>
         field = MutableStateFlow(
             DiscoverSettings(
                 DiscoverSortBy.POPULARITY_DESC
             )
         )
-
-    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-    var currentPage = 1
-    var isFetchEnabled by mutableStateOf(true)
-        private set
 
     init {
         viewModelScope.launch {
