@@ -30,10 +30,14 @@ class HomeViewModel @Inject constructor(
     private val moviesRepository: MoviesRepository,
     private val genresRepository: GenresRepository
 ) : ViewModel() {
-    val movies = mutableStateListOf<MovieWithGenre>()
+    val movies: List<MovieWithGenre>
+        field = mutableStateListOf<MovieWithGenre>()
     var isLoading by mutableStateOf(false)
+        private set
     var isRefreshing by mutableStateOf(false)
+        private set
     var error by mutableStateOf<String?>(null)
+        private set
 
     val query: StateFlow<String>
         field = MutableStateFlow("")
