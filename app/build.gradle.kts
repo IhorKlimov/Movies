@@ -96,18 +96,11 @@ dependencies {
 
     testImplementation(libs.junit)
 
-//    testImplementation(libs.mockito.core)
-//    testImplementation(libs.mockito.kotlin)
-
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
+    testImplementation(libs.kotlinx.coroutines.core)
     testImplementation(libs.mockk.android)
     testImplementation(libs.mockk.agent)
     androidTestImplementation(libs.mockk.android)
     androidTestImplementation(libs.mockk.agent)
-
-//    androidTestImplementation(libs.mockito.core)
-//    androidTestImplementation(libs.mockito.kotlin)
-//    androidTestImplementation(libs.mockito.android)
 
     testImplementation(libs.kotlinx.coroutines.test)
 
