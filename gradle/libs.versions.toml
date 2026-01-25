@@ -12,6 +12,8 @@ composeBom = "2025.12.01"
 hilt = "2.57.2"
 ksp = "2.2.10-2.0.2"
 mockitoAndroid = "5.21.0"
+mockkAgent = "1.14.7"
+mockkAndroid = "1.14.7"
 nav3Core = "1.0.0"
 lifecycleViewmodelNav3 = "2.10.0"
 kotlinSerialization = "2.3.0"
@@ -52,6 +54,8 @@ androidx-lifecycle-viewmodel-navigation3 = { module = "androidx.lifecycle:lifecy
 androidx-material3-adaptive-navigation3 = { group = "androidx.compose.material3.adaptive", name = "adaptive-navigation3", version.ref = "material3AdaptiveNav3" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 mockito-android = { module = "org.mockito:mockito-android", version.ref = "mockitoAndroid" }
+mockk-agent = { module = "io.mockk:mockk-agent", version.ref = "mockkAgent" }
+mockk-android = { module = "io.mockk:mockk-android", version.ref = "mockkAndroid" }
 retrofit = { group = "com.squareup.retrofit2", "name" = "retrofit", version.ref = "retrofit" }
 retrofit-converter = { group = "com.squareup.retrofit2", "name" = "converter-kotlinx-serialization", version.ref = "retrofit" }
 mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockitoCore" }

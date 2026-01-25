@@ -100,10 +100,10 @@ dependencies {
 //    testImplementation(libs.mockito.kotlin)
 
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
-    testImplementation("io.mockk:mockk-android:1.14.7")
-    testImplementation("io.mockk:mockk-agent:1.14.7")
-    androidTestImplementation("io.mockk:mockk-android:1.14.7")
-    androidTestImplementation("io.mockk:mockk-agent:1.14.7")
+    testImplementation(libs.mockk.android)
+    testImplementation(libs.mockk.agent)
+    androidTestImplementation(libs.mockk.android)
+    androidTestImplementation(libs.mockk.agent)
 
 //    androidTestImplementation(libs.mockito.core)
 //    androidTestImplementation(libs.mockito.kotlin)
